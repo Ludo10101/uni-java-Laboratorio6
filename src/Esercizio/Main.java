@@ -1,13 +1,8 @@
 package Esercizio;
 
 import java.util.ArrayList;
-import clienti.ClientePrivato;
-import clienti.ClienteAziendale;
-import clienti.Dipendente;
-import mezzi.Automobile;
-import mezzi.Furgone;
-import mezzi.Moto;
-import mezzi.Scooter;
+import clienti.ClientiFactory;
+import mezzi.MezziFactory;
 
 public class Main{
 
@@ -25,9 +20,11 @@ public class Main{
         System.out.println("==========================================");
 
         // Adatta i costruttori alle tue sottoclassi di Cliente (Privato / Aziendale)
-        Cliente mario = new ClientePrivato("C01", "Mario", "Rossi",45.4642, 9.1900, EPatente.B,25  );
-        Cliente lucaGiovane = new ClientePrivato("C02", "Luca", "Bianchi", 45.4650, 9.1910, EPatente.NULL,17 );
-        Cliente aziendaTech = new ClienteAziendale("C03", "TechSrl", new Dipendente(35, EPatente.B, 45.4600, 9.1850));
+        
+        
+        Cliente mario = ClientiFactory.creaClientePrivato( "Mario", "Rossi",45.4642, 9.1900, EPatente.B,25  );
+        Cliente lucaGiovane = ClientiFactory.creaClientePrivato( "Luca", "Bianchi", 45.4650, 9.1910, EPatente.NULL,17 );
+        Cliente aziendaTech = ClientiFactory.creaClienteAziendale( "TechSrl", 35, EPatente.B, 45.4600, 9.1850);
 
         bikar.aggiungiCliente(mario);
         bikar.aggiungiCliente(lucaGiovane);
@@ -36,15 +33,15 @@ public class Main{
 
         // Test Eccezione: Cliente già presente
         try {
-            bikar.aggiungiCliente(new ClientePrivato("C01", "Mario", "Duplicato",45.0, 9.0 , EPatente.B,30 ));
+            bikar.aggiungiCliente(mario);
             System.out.println("[ERRORE] Doveva lanciare ClienteGiaPresenteException!");
         } catch (RuntimeException e) {
             System.out.println("[OK - Eccezione catturata] " + e.getClass().getSimpleName() + ": " + e.getMessage());
         }
 
         // Test Aggiornamento Cliente e Eccezione Cliente inesistente
-        Cliente marioAggiornato = new ClientePrivato("C01", "Mario", "Rossi", 45.4645, 9.1905, EPatente.B,26 );
-        bikar.modificaCliente("C01", marioAggiornato);
+        Cliente marioAggiornato = ClientiFactory.creaClientePrivato( "Mario", "Rossi", 45.4645, 9.1905, EPatente.B,26 );
+        bikar.modificaCliente(mario.getId(), marioAggiornato);
         System.out.println("[OK] Cliente C01 aggiornato.");
 
         try {
@@ -60,10 +57,10 @@ public class Main{
         System.out.println("==========================================");
 
         // Adatta i costruttori alle tue sottoclassi di Mezzo (Automobile, Furgone, Scooter, Moto)
-        Mezzo auto1 = new Automobile("AA111AA", EAlimentazione.ELETTRICA, 45.4640, 9.1902);
-        Mezzo scooter1 = new Scooter("SC222SC", EAlimentazione.ELETTRICA, 45.4655, 9.1915);
-        Mezzo moto1 = new Moto("MT333MT",  45.4700, 9.2000);
-        Mezzo furgone1 = new Furgone("FG444FG", 45.4800, 9.2100);
+        Mezzo auto1 = MezziFactory.creaAutomobile( EAlimentazione.ELETTRICA, 45.4640, 9.1902);
+        Mezzo scooter1 = MezziFactory.creaScooter( EAlimentazione.ELETTRICA, 45.4655, 9.1915);
+        Mezzo moto1 = MezziFactory.creaMoto(  45.4700, 9.2000);
+        Mezzo furgone1 = MezziFactory.creaFurgone( 45.4800, 9.2100);
 
         bikar.aggiungiMezzo(auto1);
         bikar.aggiungiMezzo(scooter1);
@@ -73,16 +70,16 @@ public class Main{
 
         // Test Eccezione: Mezzo già presente
         try {
-            bikar.aggiungiMezzo(new Automobile("AA111AA", EAlimentazione.BENZINA, 45.0, 9.0));
+            bikar.aggiungiMezzo(auto1);
             System.out.println("[ERRORE] Doveva lanciare MezzoGiaPresenteException!");
         } catch (RuntimeException e) {
             System.out.println("[OK - Eccezione catturata] " + e.getClass().getSimpleName() + ": " + e.getMessage());
         }
 
         // Test Aggiornamento Mezzo e Eccezione Mezzo inesistente
-        Mezzo auto1Aggiornata = new Automobile("AA111AA", EAlimentazione.ELETTRICA,  45.4641, 9.1903);
-        bikar.modificaMezzo("AA111AA", auto1Aggiornata);
-        System.out.println("[OK] Mezzo AA111AA aggiornato.");
+        Mezzo auto1Aggiornata = MezziFactory.creaAutomobile(EAlimentazione.ELETTRICA,  45.4641, 9.1903);
+        bikar.modificaMezzo(auto1.getTarga(), auto1Aggiornata);
+        System.out.println("[OK] Mezzo aggiornato.");
 
         try {
             bikar.modificaMezzo("ZZ999ZZ", auto1Aggiornata);
@@ -122,7 +119,7 @@ public class Main{
 
         // 3. Prenotazione valida (RF-05)
         bikar.nuovaPrenotazione(marioAggiornato, auto1Aggiornata);
-        System.out.println("[OK] Prenotazione confermata per Mario su AA111AA. Disponibilita' attuale: " + auto1Aggiornata.isDisponibilita());
+        System.out.println("[OK] Prenotazione confermata per Mario su: "+auto1Aggiornata.getTarga()+". Disponibilita' attuale: " + auto1Aggiornata.isDisponibilita());
 
         // 3a. Azienda prova a prenotare la stessa auto già prenotata -> rifiutato (VD-06)
         try {
@@ -134,15 +131,15 @@ public class Main{
 
         // 4. Test Noleggio senza prenotazione (RF-10, VD-06)
         try {
-            bikar.nuovoNoleggio("FG444FG", 10.0);
+            bikar.nuovoNoleggio(furgone1.getTarga(), 10.0);
             System.out.println("[ERRORE] Doveva lanciare PrenotazioneInesistenteException!");
         } catch (RuntimeException e) {
             System.out.println("[OK - Noleggio senza prenotazione] " + e.getClass().getSimpleName() + ": " + e.getMessage());
         }
 
         // 5. Avvio noleggio valido (RF-07) - es. minuto 600 (ore 10:00)
-        bikar.nuovoNoleggio("AA111AA", 600.0);
-        System.out.println("[OK] Noleggio avviato per AA111AA al minuto 600.0.");
+        bikar.nuovoNoleggio(auto1Aggiornata.getTarga(), 600.0);
+        System.out.println("[OK] Noleggio avviato per"+auto1Aggiornata.getTarga()+" al minuto 600.0.");
 
         // 6. Test calcolo costo su noleggio non ancora terminato
         try {
@@ -154,22 +151,22 @@ public class Main{
 
         // 7. Chiusura noleggio non avviato (RF-10, VD-06)
         try {
-            bikar.chiudiNoleggio("FG444FG", 630.0, 45.49, 9.22);
+            bikar.chiudiNoleggio(furgone1.getTarga(), 630.0, 45.49, 9.22);
             System.out.println("[ERRORE] Doveva lanciare NoleggioInesistenteException!");
         } catch (RuntimeException e) {
             System.out.println("[OK - Chiusura noleggio inesistente] " + e.getClass().getSimpleName() + ": " + e.getMessage());
         }
 
         // 8. Chiusura noleggio valido (RF-08, RF-09) - es. 25 minuti dopo (minuto 625)
-        System.out.print("[OK] Chiusura noleggio AA111AA -> ");
-        bikar.chiudiNoleggio("AA111AA", 625.0, 45.4750, 9.1950);
-        System.out.println("Nuova disponibilita' AA111AA: " + auto1Aggiornata.isDisponibilita()
+        System.out.print("[OK] Chiusura noleggio "+auto1Aggiornata.getTarga()+" -> ");
+        bikar.chiudiNoleggio(auto1Aggiornata.getTarga(), 625.0, 45.4750, 9.1950);
+        System.out.println("Nuova disponibilita' "+auto1Aggiornata.getTarga()+": " + auto1Aggiornata.isDisponibilita()
                 + " | Nuova posizione: (" + auto1Aggiornata.getLatitudine() + ", " + auto1Aggiornata.getLongitudine() + ")");
 
         // 9. Verifica riutilizzo del mezzo dopo la chiusura (test del controllo oraFine == -1)
         bikar.nuovaPrenotazione(aziendaTech, auto1Aggiornata);
-        bikar.nuovoNoleggio("AA111AA", 700.0);
+        bikar.nuovoNoleggio(auto1Aggiornata.getTarga(), 700.0);
         System.out.print("[OK] Secondo noleggio sullo stesso mezzo chiuso -> ");
-        bikar.chiudiNoleggio("AA111AA", 710.0, 45.4800, 9.2000);
+        bikar.chiudiNoleggio(auto1Aggiornata.getTarga(), 710.0, 45.4800, 9.2000);
     }
 }
