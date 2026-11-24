@@ -1,6 +1,5 @@
 package Esercizio;
-import eccezioni.EtaNonValidaException;
-import eccezioni.PatenteNonValidaException;
+
 
 public abstract class Mezzo {
 	private String targa;
@@ -30,16 +29,7 @@ public abstract class Mezzo {
 	
 	public abstract String getTipologiaMezzo();
 	
-	public void verificaVincoli(Cliente c) {
-		if(c.getConducenteEta()<minEta||c.getConducenteEta()>maxEta) {
-			String msg="L'età del conducente: "+c.getConducenteEta()+" non rispetta i vincoli: ["+minEta+","+maxEta+"].";
-			throw new EtaNonValidaException(msg, c.getConducenteEta(),minEta, maxEta);
-		}
-		if(c.getConducentePatente().ordinal()<patenteRichiesta.ordinal()) {
-			String msg="La patente del conducente: "+c.getConducentePatente().name()+" è inferiore alla patente richiesta: "+patenteRichiesta.name();
-			throw new PatenteNonValidaException(msg,c.getConducentePatente(),patenteRichiesta);
-		}
-	}
+	
 	
 	public double calcolaDistanza(Cliente c) {
 		return Math.sqrt(Math.pow(latitudine-c.getConducenteLatitudine(),2)+Math.pow(longitudine-c.getConducenteLongitudine(),2));

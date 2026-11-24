@@ -4,9 +4,11 @@ import java.util.Iterator;
 
 import eccezioni.ClienteGiaPresenteException;
 import eccezioni.ClienteInesistenteException;
+import eccezioni.EtaNonValidaException;
 import eccezioni.MezzoGiaPrenotatoException;
 import eccezioni.PrenotazioneInesistenteException;
 import eccezioni.NoleggioNonTerminatoException;
+import eccezioni.PatenteNonValidaException;
 import eccezioni.NoleggioInesistenteException;
 import eccezioni.MezzoInesistenteException;
 import eccezioni.MezzoGiaPresenteException;
@@ -79,7 +81,7 @@ public class Sistema {
 
 		transportsArray.sort(new DistanceMezzoComparator(c));;
 		for(Mezzo m: transportsArray) {
-			System.out.printf("Tipo: %s\nTarga: %s\nDistanza: %.2f\nDisponibilita': %B\nTariffa al minuto: %.2f.\n",m.getTipologiaMezzo(),m.getTarga(),m.calcolaDistanza(c),m.isDisponibilita(),m.getTariffaMinuto());
+			System.out.printf("\n\nTipo: %s\nTarga: %s\nDistanza: %.2f\nDisponibilita': %B\nTariffa al minuto: %.2f.\n",m.getTipologiaMezzo(),m.getTarga(),m.calcolaDistanza(c),m.isDisponibilita(),m.getTariffaMinuto());
 		}
 	}
 	
@@ -87,13 +89,23 @@ public class Sistema {
 		transportsArray.sort(new DistanceMezzoComparator(c));;
 		for(Mezzo m: transportsArray) {
 			if(tipo.equals(m.getTipologiaMezzo())) {
-				System.out.printf("Tipo: %s\nTarga: %s\nDistanza: %.2f\nDisponibilita': %B\nTariffa al minuto: %.2f.\n",m.getTipologiaMezzo(),m.getTarga(),m.calcolaDistanza(c),m.isDisponibilita(),m.getTariffaMinuto());
+				System.out.printf("\n\nTipo: %s\nTarga: %s\nDistanza: %.2f\nDisponibilita': %B\nTariffa al minuto: %.2f.\n",m.getTipologiaMezzo(),m.getTarga(),m.calcolaDistanza(c),m.isDisponibilita(),m.getTariffaMinuto());
 			}
+		}
+	}
+	public void verificaVincoli(Cliente c, Mezzo m) {
+		if(c.getConducenteEta()<m.getMinEta()||c.getConducenteEta()>m.getMaxEta()) {
+			String msg="L'età del conducente: "+c.getConducenteEta()+" non rispetta i vincoli: ["+m.getMinEta()+","+m.getMaxEta()+"].";
+			throw new EtaNonValidaException(msg, c.getConducenteEta(),m.getMinEta(), m.getMaxEta());
+		}
+		if(c.getConducentePatente().ordinal()<m.getPatenteRichiesta().ordinal()) {
+			String msg="La patente del conducente: "+c.getConducentePatente().name()+" è inferiore alla patente richiesta: "+m.getPatenteRichiesta().name();
+			throw new PatenteNonValidaException(msg,c.getConducentePatente(),m.getPatenteRichiesta());
 		}
 	}
 	
 	public void nuovaPrenotazione(Cliente c, Mezzo m) {
-		m.verificaVincoli(c);
+		verificaVincoli(c,m);
 		if(!m.isDisponibilita()) {
 			throw new MezzoGiaPrenotatoException("Il mezzo con targa: "+m.getTarga()+" non e' disponibile.\n",m );
 		}
@@ -105,6 +117,8 @@ public class Sistema {
 		m.setDisponibilita(false);
 		reservationsArray.add(new Prenotazione(c,m));
 	}
+	
+	
 	
 	public void chiudiPrenotazione(String targa) {
 		int size=reservationsArray.size();
